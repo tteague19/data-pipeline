@@ -118,7 +118,7 @@ def create_score_mask(
     score_key: str,
     invalid_values: Tuple[str, ...]) -> np.ndarray:
     """
-    Create a mask that
+    Create a mask that is used to replace invalid entries.
 
     :param dataframe: A dataframe that contains all rows from the
         original dataset
@@ -167,6 +167,56 @@ def rename_columns(dataframe: pd.DataFrame) -> pd.DataFrame:
 
     return dataframe
 
+def create_care_dataframe_subset(dataframe: pd.DataFrame) -> pd.DataFrame:
+    """
+    Filter the dataframe to contain entries relevant to certain measures.
+
+    :param dataframe: A dataframe that contains data related to
+        measures of care
+    :type dataframe: pd.DataFrame
+    :return: The input dataframe reduced to the entries that contain
+        the measures of interest to us
+    :rtype: pd.DataFrame
+    """
+    transform_input = CareTransformParams()
+
+    subset_dataframe = dataframe.copy()[list(transform_input.used_columns)]
+    masks = [
+            np.array(subset_dataframe[transform_input.measure_col] == col)
+            for col in transform_input.relevant_measure_ids
+    ]
+    reduced_masks = reduce(lambda a, b: a | b, masks)  # type: np.ndarray
+    subset_dataframe = subset_dataframe.copy().loc[reduced_masks, :]
+
+    return subset_dataframe
+
+def replace_care_dataframe_invalid_entries(
+    dataframe: pd.DataFrame) -> pd.DataFrame:
+    """
+    Replace the invalid entries in a dataframe of the care-related data.
+
+    :param dataframe: A dataframe that contains the care-related data.
+        We assume we have removed irrelevant rows.
+    :type dataframe: pd.DataFrame
+    :return: The input dataframe where invalid entries have been
+        replaced by dummy values we have chosen
+    :rtype: pd.DataFrame
+    """
+    transform_input = CareTransformParams()
+
+    for data_col in transform_input.data_cols:
+        for measure_id in transform_input.relevant_measure_ids:
+            mask = create_score_mask(
+                dataframe=dataframe,
+                measure_id=measure_id,
+                measure_key=transform_input.measure_col,
+                score_key=data_col,
+                invalid_values=transform_input.invalid_row_vals)
+            dataframe.loc[mask, data_col] = transform_input.dummy_val
+        dataframe[data_col] = dataframe.copy()[data_col].astype(int)
+
+    return dataframe
+
 def transform_care_dataframe(care_dataframe: pd.DataFrame) -> pd.DataFrame:
     """
     Transform a dataframe that describes care information for various hospitals.
@@ -177,30 +227,12 @@ def transform_care_dataframe(care_dataframe: pd.DataFrame) -> pd.DataFrame:
     :return: The input dataframe transformed to enable further processing
     :rtype: pd.DataFrame
     """
-    transform_input = CareTransformParams()
+    subset_dataframe = create_care_dataframe_subset(
+        dataframe=care_dataframe)
+    cleaned_dataframe = replace_care_dataframe_invalid_entries(
+        dataframe=subset_dataframe)
 
-    # TODO: Extract into a function
-    subset_dataframe = care_dataframe.copy()[list(transform_input.used_columns)]
-    masks = [
-            np.array(subset_dataframe[transform_input.measure_col] == col)
-            for col in transform_input.relevant_measure_ids
-    ]
-    reduced_masks = reduce(lambda a, b: a | b, masks)  # type: np.ndarray
-    subset_dataframe = subset_dataframe.copy().loc[reduced_masks, :]
-
-    # TODO: Extract into a function
-    for data_col in transform_input.data_cols:
-        for measure_id in transform_input.relevant_measure_ids:
-            mask = create_score_mask(
-                dataframe=subset_dataframe,
-                measure_id=measure_id,
-                measure_key=transform_input.measure_col,
-                score_key=data_col,
-                invalid_values=transform_input.invalid_row_vals)
-            subset_dataframe.loc[mask, data_col] = transform_input.dummy_val
-        subset_dataframe[data_col] = subset_dataframe.copy()[data_col].astype(int)
-
-    return subset_dataframe
+    return cleaned_dataframe
 
 def transform_hospital_dataframe(
     hospital_dataframe: pd.DataFrame) -> pd.DataFrame:
