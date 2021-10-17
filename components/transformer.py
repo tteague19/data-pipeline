@@ -216,7 +216,7 @@ def transform_hospital_dataframe(
     """
     transform_input = HospitalTransformParams()
 
-    subset_dataframe = hospital_dataframe.copy()[transform_input.used_columns]
+    subset_dataframe = hospital_dataframe.copy()[list(transform_input.used_columns)]
 
     # We encode hospitals that do not contain an overall rating with
     # a rating of zero, which is outside the valid set of ratings of
