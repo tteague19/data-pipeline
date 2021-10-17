@@ -12,12 +12,10 @@ class Extractor(ABC):
     @abstractmethod
     def __init__(self, **kwargs: Dict[str, Path]) -> None:
         """Create an instance of the class."""
-        pass
 
     @abstractmethod
     def load_data(self) -> Dict[str, pd.DataFrame]:
         """Load the data."""
-        pass
 
 
 class LocalExtractor(Extractor):
@@ -63,11 +61,11 @@ def main(file_dict: Dict[str, Path]) -> None:
 
 
 if __name__ == "__main__":
-    file_dict = {
+    file_desc_to_path_dict = {
         "hospital": Path.cwd().joinpath(
             "data", "Hospital_General_Information.csv"),
         "care": Path.cwd().joinpath(
             "data", "Timely_and_Effective_Care-Hospital.csv")
     }
 
-    main(file_dict=file_dict)
+    main(file_dict=file_desc_to_path_dict)
