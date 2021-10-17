@@ -1,0 +1,14 @@
+# VS Code files
+.vscode/
+
+# The description of the assignment
+data_take_home.md
+
+# Files Python sometimes generates
+*.pyc
+
+# Database files we create
+*.db
+
+# CSV files we use as input
+*.csv
