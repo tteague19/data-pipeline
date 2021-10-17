@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from functools import reduce
 from pathlib import Path
-from typing import Callable, Dict, List, Tuple
+from typing import Callable, Dict, Tuple
 
 import numpy as np
 import pandas as pd
@@ -17,7 +17,7 @@ class HospitalTransformParams:
     rating_key: str = "hospital_overall_rating"
     valid_ratings: Tuple[str, ...] = ("1", "2", "3", "4", "5")
     dummy_val: int = 0
-    used_columns: List[str] = [
+    used_columns: Tuple[str, ...] = (
         "facility_id",
         "facility_name",
         "address",
@@ -27,13 +27,13 @@ class HospitalTransformParams:
         "county_name",
         "phone_number",
         "hospital_overall_rating"
-    ]
+    )
 
 @dataclass
 class CareTransformParams:
     """Contain parameters relevant to transforming the care dataframe"""
 
-    used_columns: List[str] = [
+    used_columns: Tuple[str, ...] = (
         "facility_id",
         "measure_id",
         "measure_name",
@@ -41,10 +41,10 @@ class CareTransformParams:
         "sample",
         "start_date",
         "end_date"
-    ]
+    )
     measure_col: str = "measure_id"
-    data_cols: List[str] = ["score", "sample"]
-    relevant_measure_ids: List[str] = ["OP_31", "OP_22"]
+    data_cols: Tuple[str, ...] = ("score", "sample")
+    relevant_measure_ids: Tuple[str, ...] = ("OP_31", "OP_22")
     invalid_row_vals: Tuple[str, ...] = ("Not Available",)
     dummy_val: int = -1
 
@@ -180,7 +180,7 @@ def transform_care_dataframe(care_dataframe: pd.DataFrame) -> pd.DataFrame:
     transform_input = CareTransformParams()
 
     # TODO: Extract into a function
-    subset_dataframe = care_dataframe.copy()[transform_input.used_columns]
+    subset_dataframe = care_dataframe.copy()[list(transform_input.used_columns)]
     masks = [
             np.array(subset_dataframe[transform_input.measure_col] == col)
             for col in transform_input.relevant_measure_ids
